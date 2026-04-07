@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# CLI 占位：后续可改为 python -m cellflow 或 setuptools console_scripts
+echo "cellflow: 占位可执行文件，请接入实际 CLI。" >&2
+exit 1

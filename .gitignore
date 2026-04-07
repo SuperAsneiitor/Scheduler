@@ -1,0 +1,7 @@
+# 测试与本地运行产物（统一目录，见 pytest.ini basetemp）
+test_work/
+
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/

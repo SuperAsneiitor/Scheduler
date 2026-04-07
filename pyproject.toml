@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eda-scheduler"
+version = "0.1.0"
+description = "EDA automation scheduler (core jobs + plugin registry)"
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_unused_configs = true
+show_error_codes = true
+mypy_path = "src"
+explicit_package_bases = true
+namespace_packages = true
+files = [
+  "src/config",
+  "src/core",
+  "src/eda_jobs",
+  "src/executors",
+  "src/jobs",
+  "src/orchestration",
+  "src/orchestrator",
+  "src/scheduling",
+]

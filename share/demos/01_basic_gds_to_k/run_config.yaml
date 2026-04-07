@@ -1,0 +1,22 @@
+# GDS-to-K Demo：线性 DAG — task_gds_out -> task_drc -> task_char
+flow:
+  name: basic_gds_to_k
+  version: "1.0"
+  description: Demo workflow for GDS export, DRC, and characterization placeholder
+
+execution:
+  mode: local
+  local_settings:
+    max_parallel_jobs: 4
+
+tasks:
+  - id: task_gds_out
+    type: GDS_Export
+  - id: task_drc
+    type: DRC
+    depends_on:
+      - task_gds_out
+  - id: task_char
+    type: PLACEHOLDER
+    depends_on:
+      - task_drc
