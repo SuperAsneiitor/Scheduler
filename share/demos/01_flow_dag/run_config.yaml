@@ -1,0 +1,21 @@
+# Demo 01：仅演示 DAG 与依赖解析（不提供 command -> 走占位成功路径）
+flow:
+  name: demo_flow_dag
+  version: "1.0"
+  description: Minimal DAG parsing demo
+
+execution:
+  mode: local
+  local_settings:
+    max_parallel_jobs: 2
+
+tasks:
+  - id: task_a
+    type: PLACEHOLDER
+  - id: task_b
+    type: PLACEHOLDER
+    depends_on: [task_a]
+  - id: task_c
+    type: PLACEHOLDER
+    depends_on: [task_b]
+

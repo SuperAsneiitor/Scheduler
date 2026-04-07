@@ -5,13 +5,13 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from orchestration import (
+from flow import (
     DAGManager,
     YAMLParser,
     apply_flow_config_to_dag,
 )
-from orchestration.exceptions import CyclicDependencyError
-from orchestration.models import TaskStatus, TaskType
+from flow.graph.exceptions import CyclicDependencyError
+from flow.spec.task_models import TaskStatus, TaskType
 
 
 def test_yaml_parser_loads_flow_config(tmp_path: Path) -> None:
@@ -117,7 +117,7 @@ def test_parse_mapping_roundtrip() -> None:
             {"id": "x", "type": "DRC", "depends_on": []},
         ],
     }
-    from orchestration.yaml_parser import YAMLParser
+    from flow.spec.yaml_parser import YAMLParser
 
     flow = YAMLParser.parse_mapping(data)
     assert flow.tasks[0].id == "x"

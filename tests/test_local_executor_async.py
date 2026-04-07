@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from config import load_execution_config_from_mapping
-from executors import (
+from flow.executors.backends import (
     ExecutorJobState,
     JobNotFoundError,
     LocalExecutor,
@@ -22,7 +22,7 @@ def test_submit_job_mock_success_records_done_status(tmp_path) -> None:
         mock_proc.wait = AsyncMock(return_value=0)
 
         with patch(
-            "executors.local_executor.asyncio.create_subprocess_exec",
+            "flow.executors.backends.local_executor.asyncio.create_subprocess_exec",
             new=AsyncMock(return_value=mock_proc),
         ):
             executor = LocalExecutor(max_parallel_jobs=2)
@@ -47,7 +47,7 @@ def test_submit_job_mock_nonzero_records_failed_job_id(tmp_path) -> None:
         mock_proc.wait = AsyncMock(return_value=42)
 
         with patch(
-            "executors.local_executor.asyncio.create_subprocess_exec",
+            "flow.executors.backends.local_executor.asyncio.create_subprocess_exec",
             new=AsyncMock(return_value=mock_proc),
         ):
             executor = LocalExecutor(max_parallel_jobs=2)
@@ -100,7 +100,7 @@ def test_submit_job_oserror_raises_local_process_start_error(tmp_path) -> None:
 
     async def _main() -> None:
         with patch(
-            "executors.local_executor.asyncio.create_subprocess_exec",
+            "flow.executors.backends.local_executor.asyncio.create_subprocess_exec",
             new=_boom,
         ):
             executor = LocalExecutor(max_parallel_jobs=1)

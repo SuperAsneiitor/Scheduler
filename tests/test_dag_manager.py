@@ -2,13 +2,8 @@
 
 import pytest
 
-from orchestration import (
-    CyclicDependencyError,
-    DAGManager,
-    TaskNode,
-    TaskStatus,
-    TaskType,
-)
+from flow import DAGManager, TaskNode, TaskStatus, TaskType
+from flow.graph.exceptions import CyclicDependencyError
 
 
 def test_get_ready_tasks_gds_drc_pex_chain_returns_next_pending_after_upstream_success() -> None:

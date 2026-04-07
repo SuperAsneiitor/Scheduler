@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from executors import (
+from flow.executors.backends import (
     ExecutorJobState,
     ExecutorSubmissionError,
     LocalExecutor,
@@ -39,7 +39,7 @@ def test_get_executor_unknown_mode_raises_value_error() -> None:
         get_executor("slurm_only")
 
 
-@patch("executors.lsf_executor.subprocess.run")
+@patch("flow.executors.backends.lsf_executor.subprocess.run")
 def test_lsf_submit_job_extracts_job_id_from_bsub_stdout(
     mock_run: MagicMock,
     tmp_path,
@@ -65,7 +65,7 @@ def test_lsf_submit_job_extracts_job_id_from_bsub_stdout(
     assert "normal" in cmd
 
 
-@patch("executors.lsf_executor.subprocess.run")
+@patch("flow.executors.backends.lsf_executor.subprocess.run")
 def test_lsf_submit_job_bsub_failure_raises_executor_submission_error(
     mock_run: MagicMock,
     tmp_path,
@@ -85,7 +85,7 @@ def test_lsf_submit_job_bsub_failure_raises_executor_submission_error(
         executor.submit_job(str(script), str(tmp_path / "log.txt"))
 
 
-@patch("executors.lsf_executor.subprocess.run")
+@patch("flow.executors.backends.lsf_executor.subprocess.run")
 def test_lsf_check_status_parses_run_done_exit(mock_run: MagicMock) -> None:
     """bjobs 输出应解析为 RUN / DONE / EXIT。"""
     executor = LSFExecutor(queue="normal")
@@ -111,7 +111,7 @@ def test_lsf_check_status_parses_run_done_exit(mock_run: MagicMock) -> None:
     assert executor.check_status("300") == ExecutorJobState.EXIT.value
 
 
-@patch("executors.lsf_executor.subprocess.run")
+@patch("flow.executors.backends.lsf_executor.subprocess.run")
 def test_lsf_submit_job_inject_flow_isolation_writes_wrapper_and_calls_bsub(
     mock_run: MagicMock,
     tmp_path,

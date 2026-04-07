@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from orchestration.models import TaskNode, TaskStatus, TaskType
-from orchestrator.monitor import JobMonitor, JobStatus
-from orchestrator.scheduler import TaskScheduler
+from flow.spec.task_models import TaskNode, TaskStatus, TaskType
+from flow.runtime.orchestrator.monitor import JobMonitor, JobStatus
+from flow.runtime.orchestrator.scheduler import TaskScheduler
 
 
 def test_scheduler_closed_loop_running_then_success_releases_slot(tmp_path: Path) -> None:

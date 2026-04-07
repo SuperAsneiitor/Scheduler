@@ -4,8 +4,8 @@ import asyncio
 
 import pytest
 
-from orchestration import TaskNode, TaskStatus, TaskType
-from scheduling import (
+from flow import TaskNode, TaskStatus, TaskType
+from flow.cluster.scheduler import (
     ClusterScheduler,
     SubmitStatus,
     TaskSubmitResult,

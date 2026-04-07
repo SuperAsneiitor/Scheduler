@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from eda_jobs import (
+from eda.lib.eda_jobs import (
     CharacterizationJob,
     DRCJob,
     EDAJobPostCheckError,

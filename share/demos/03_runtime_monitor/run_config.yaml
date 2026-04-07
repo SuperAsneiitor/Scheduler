@@ -1,0 +1,16 @@
+# Demo 03：演示 runtime 的 `.running` 与 `status.json` 监控闭环
+flow:
+  name: demo_runtime_monitor
+  version: "1.0"
+  description: Demonstrate .running/status.json conventions
+
+execution:
+  mode: local
+  local_settings:
+    max_parallel_jobs: 1
+
+tasks:
+  - id: monitored_task
+    type: PLACEHOLDER
+    command: ["python", "-c", "import time; time.sleep(0.2)"]
+

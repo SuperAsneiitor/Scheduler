@@ -1,0 +1,29 @@
+# Demo 02：演示 LocalExecutor 并发执行（提供 command 列表）
+flow:
+  name: demo_executor_local_parallel
+  version: "1.0"
+  description: Local executor parallelism demo
+
+execution:
+  mode: local
+  local_settings:
+    max_parallel_jobs: 4
+
+tasks:
+  - id: sleep_01
+    type: PLACEHOLDER
+    command: ["python", "-c", "import time; time.sleep(1)"]
+  - id: sleep_02
+    type: PLACEHOLDER
+    command: ["python", "-c", "import time; time.sleep(1)"]
+  - id: sleep_03
+    type: PLACEHOLDER
+    command: ["python", "-c", "import time; time.sleep(1)"]
+  - id: sleep_04
+    type: PLACEHOLDER
+    command: ["python", "-c", "import time; time.sleep(1)"]
+  - id: sleep_05
+    type: PLACEHOLDER
+    depends_on: [sleep_01, sleep_02]
+    command: ["python", "-c", "import time; time.sleep(1)"]
+

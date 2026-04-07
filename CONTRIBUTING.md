@@ -9,8 +9,8 @@
 | 规则 | 说明 |
 |------|------|
 | **规范文件** | 若仓库根目录存在 **`.cursorrules`**，开发与提交前须完整阅读并遵守。 |
-| **禁止随意修改系统代码** | **`src/core/`**（插件基座、`BaseEDAJob` 契约）与 **`src/orchestrator/`**（监控、调度循环）视为**系统代码**。缺陷修复或通用能力增强须通过评审；**业务专用工具逻辑不得写入上述目录**。 |
-| **扩展位置** | 所有新增工具、流程序、厂商适配**仅允许**在 **`src/jobs/`** 下以 **Python 包/模块**形式新增，并通过 **`BaseEDAJob` + `JobRegistry`** 注册。 |
+| **禁止随意修改系统代码** | **`src/eda/core/`**（插件基座、`BaseEDAJob` 契约）与 **`src/flow/runtime/`**（监控、调度循环）视为**系统代码**。缺陷修复或通用能力增强须通过评审；**业务专用工具逻辑不得写入上述目录**。 |
+| **扩展位置** | 所有新增工具、流程序、厂商适配**仅允许**在 **`src/eda/plugins/`** 下以 **Python 包/模块**形式新增，并通过 **`BaseEDAJob` + `JobRegistry`** 注册。 |
 | **测试** | 必须在 **`tests/test_jobs/`** 下为新增插件编写 pytest；**禁止**在 CI/本地单测中真实调用 EDA 可执行文件或许可证服务。 |
 
 ---
@@ -19,21 +19,21 @@
 
 ### Step 1：继承基类并注册
 
-在 **`src/jobs/`** 下新增模块（例如 `src/jobs/my_tool/my_job.py`），继承：
+在 **`src/eda/plugins/`** 下新增模块（例如 `src/eda/plugins/my_tool/my_job.py`），继承：
 
 ```text
-from core.base_job import BaseEDAJob
+from eda.core.base.base_job import BaseEDAJob
 ```
 
 为类设置**全局唯一**的 `job_type`（建议 `域.工具.名称` 风格，如 `eda.drc.calibre_dummy`）。子类定义被加载时，会通过 `__init_subclass__` 自动注册到 `JobRegistry`（无需改中央列表）。
 
-**入口发现**：应用启动时调用一次 `jobs.discover_jobs()`，以扫描 `src/jobs` 包内模块（与现有 `tests/test_job_registry.py` 行为一致）。
+**入口发现**：应用启动时调用一次 `eda.plugins.registry.discover_jobs()`，以扫描 `src/eda/plugins` 包内模块（与现有 `tests/test_jobs/test_job_registry.py` 行为一致）。
 
 ---
 
 ### Step 2：实现生命周期方法
 
-当前 **`src/core/base_job.BaseEDAJob`** 要求子类**必须实现**以下三个抽象方法（与带完整子进程流水线的 `eda_jobs.base_job.BaseEDAJob` 不同，请勿混淆）：
+当前 **`src/eda/core/base/base_job.BaseEDAJob`** 要求子类**必须实现**以下三个抽象方法（与带完整子进程流水线的 `eda.lib.eda_jobs.BaseEDAJob` 不同，请勿混淆）：
 
 | 方法 | 职责 |
 |------|------|
@@ -45,21 +45,21 @@ from core.base_job import BaseEDAJob
 
 - **核心插件契约**中**没有**名为 `run` 的抽象方法；若你需要在本插件内**直接调用 `subprocess`** 拉起 EDA 命令行，建议：
   - 将具体执行封装在**私有方法**（如 `_run_eda()`）中，并在合适的生命周期阶段调用；或
-  - 参考 **`src/eda_jobs/base_job.py`** 中的 **`build_command()`、`execute_pipeline()`** 等模板方法（该路径属于**参考实现**，新插件仍应放在 `src/jobs/`，且不要为适配它而修改 `core`/`orchestrator`）。
+  - 参考 **`src/eda/lib/eda_jobs/base_job.py`** 中的 **`build_command()`、`execute_pipeline()`** 等模板方法（该路径属于**参考实现**，新插件仍应放在 `src/eda/plugins/`，且不要为适配它而修改 `eda/core` 或 `flow/runtime`）。
 - 无论采用何种执行方式，**任务工作目录**内需满足下文的 **`status.json` 约定**，以便 `JobMonitor` 与 DAG 状态一致。
 
 ---
 
 ### Step 3：状态汇报约定（核心）
 
-调度侧的 **`JobMonitor`**（`src/orchestrator/monitor.py`）根据任务节点上的 **`workspace_path`** 轮询：
+调度侧的 **`JobMonitor`**（`src/flow/runtime/orchestrator/monitor.py`）根据任务节点上的 **`workspace_path`** 轮询：
 
 | 文件 | 作用 |
 |------|------|
 | **`.running`** | 运行中标志；存在时间超过阈值且仍无合法 `status.json` 时，可判为超时类状态。 |
 | **`status.json`** | 任务**结束**时写入的**终态**摘要；解析成功则得到 `Success` / `Failed` 及指标。 |
 
-**`status.json` 推荐字段**（与 `StatusJsonPayload` 一致）：
+**`status.json` 推荐字段**（与 `JobMonitor` 的 `StatusJsonPayload` 一致）：
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
@@ -80,6 +80,28 @@ def write_status_json(workspace: Path, success: bool, metrics: dict) -> None:
     }
     path = workspace / "status.json"
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+```
+
+若你希望复用统一工具函数，可直接使用：`flow.runtime.status_reporting.write_running_flag()` / `write_status_json()` / `clear_running_flag()`。
+
+**推荐时序（图文）**：
+
+```mermaid
+sequenceDiagram
+    participant Job as 插件任务
+    participant WS as workspace
+    participant Mon as JobMonitor
+    Job->>WS: write_running_flag()
+    Note over WS: 创建 .running
+    Job->>Job: 执行业务命令 / 解析结果
+    alt 成功
+        Job->>WS: write_status_json(success=True, ppa=...)
+    else 失败
+        Job->>WS: write_status_json(success=False, ppa=...)
+    end
+    Job->>WS: clear_running_flag()
+    Mon->>WS: 轮询 status.json / .running
+    Mon-->>Mon: 产出 Success/Failed/TimeoutFailed
 ```
 
 **注意**：业务上常说的「metrics」在本仓库监控模型中落在 **`ppa`** 字段名之下；若 JSON 缺字段或类型不符，监控器会回退到基于 `.running` 的推断逻辑，可能导致状态不如预期。
@@ -112,7 +134,7 @@ def test_my_job_builds_command(mock_run: MagicMock) -> None:
 
 ## 3. 极简插件模板（DummyJob）
 
-以下骨架可直接复制到 `src/jobs/<包名>/<模块>.py` 并按工具改写。**不要**把该文件提交为同名生产模块时忘记改 `job_type` 与类名。
+以下骨架可直接复制到 `src/eda/plugins/<包名>/<模块>.py` 并按工具改写。**不要**把该文件提交为同名生产模块时忘记改 `job_type` 与类名。
 
 ```python
 """示例：最小 BaseEDAJob 插件（无真实 EDA 调用）。"""
@@ -121,7 +143,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from core.base_job import BaseEDAJob
+from eda.core.base.base_job import BaseEDAJob
 
 
 class DummyJob(BaseEDAJob):
@@ -144,13 +166,59 @@ class DummyJob(BaseEDAJob):
         return None
 ```
 
-接入真实流水线时，请在**任务工作目录**中于适当时机写入 **`.running`**（开始）与 **`status.json`**（结束），并与编排层下发的 `workspace_path` 对齐。
+### 可复制“图文闭环”模板（推荐）
+
+```python
+from pathlib import Path
+from typing import Dict
+
+from eda.core.base.base_job import BaseEDAJob
+from flow.runtime.status_reporting import (
+    clear_running_flag,
+    write_running_flag,
+    write_status_json,
+)
+
+
+class DummyWithStatusJob(BaseEDAJob):
+    job_type = "eda.example.dummy_with_status"
+
+    def __init__(self, workspace: Path) -> None:
+        self.workspace = workspace
+
+    def pre_check(self) -> None:
+        return None
+
+    def generate_scripts(self) -> Path:
+        script = self.workspace / "run.sh"
+        script.parent.mkdir(parents=True, exist_ok=True)
+        script.write_text("#!/usr/bin/env bash\necho ok\n", encoding="utf-8")
+        return script
+
+    def post_check(self) -> None:
+        return None
+
+    def execute(self) -> Dict[str, float]:
+        write_running_flag(self.workspace)
+        try:
+            # TODO: 调用 subprocess/工具执行
+            ppa = {"drc_violations": 0.0}
+            write_status_json(self.workspace, success=True, ppa=ppa)
+            return ppa
+        except Exception:
+            write_status_json(self.workspace, success=False, ppa={})
+            raise
+        finally:
+            clear_running_flag(self.workspace)
+```
+
+接入真实流水线时，请在**任务工作目录**中于适当时机写入 **`.running`**（开始）与 **`status.json`**（结束），并与任务流组件下发的 `workspace_path` 对齐。
 
 ---
 
 ## 4. 提交前自检
 
-- [ ] 未修改 `src/core/`、`src/orchestrator/` 中与本需求无关的文件。
-- [ ] 新代码仅位于 `src/jobs/`（及对应测试 `tests/test_jobs/`）。
+- [ ] 未修改 `src/eda/core/`、`src/flow/runtime/` 中与本需求无关的文件。
+- [ ] 新代码仅位于 `src/eda/plugins/`（及对应测试 `tests/test_jobs/`）。
 - [ ] `python -m pytest tests` 通过，且无不必要的外部 EDA 依赖。
 - [ ] 日志使用 `logging`，生产路径避免 `print()`（与项目规范一致）。
