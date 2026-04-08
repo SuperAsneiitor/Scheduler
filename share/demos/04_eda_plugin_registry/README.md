@@ -1,17 +1,13 @@
-# Demo 04：EDA 插件注册（JobRegistry）
-
-该 Demo 演示：
-
-- `eda.core.base.BaseEDAJob` 的 `__init_subclass__` 自动注册机制
-- `eda.plugins.registry.discover_jobs()` 扫描插件包并完成注册
-- 使用 `JobRegistry.create_job(job_type)` 实例化插件
-
-运行（仓库根目录）：
+﻿# Demo 04锛欵DA 鎻掍欢娉ㄥ唽锛圝obRegistry锛?
+璇?Demo 婕旂ず锛?
+- `eda_tasks.base_job.BaseEDAJob` 鐨?`__init_subclass__` 鑷姩娉ㄥ唽鏈哄埗
+- `eda_tasks.plugins.registry.discover_jobs()` 鎵弿鎻掍欢鍖呭苟瀹屾垚娉ㄥ唽
+- 浣跨敤 `JobRegistry.create_job(job_type)` 瀹炰緥鍖栨彃浠?
+杩愯锛堜粨搴撴牴鐩綍锛夛細
 
 ```bash
 source bin/env.sh
-python -c "from eda.plugins.registry import JobRegistry, discover_jobs; discover_jobs(); print(sorted(JobRegistry.registered_types().keys()))"
+python -c "from eda_tasks.plugins.registry import JobRegistry, discover_jobs; discover_jobs(); print(sorted(JobRegistry.registered_types().keys()))"
 ```
 
-> 当前仓库提供示例插件 `eda.drc.calibre_dummy`，生成脚本会写入 `test_work/`（被 `.gitignore` 忽略）。
-
+> 褰撳墠浠撳簱鎻愪緵绀轰緥鎻掍欢 `eda.drc.calibre_dummy`锛岀敓鎴愯剼鏈細鍐欏叆 `test_work/`锛堣 `.gitignore` 蹇界暐锛夈€?

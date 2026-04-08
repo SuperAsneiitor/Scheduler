@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from config import (
+from sys_config import (
     ExecutionConfig,
     load_execution_config_from_mapping,
     load_execution_config_from_yaml,

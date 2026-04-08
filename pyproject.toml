@@ -20,7 +20,7 @@ mypy_path = "src"
 explicit_package_bases = true
 namespace_packages = true
 files = [
-  "src/config",
-  "src/flow",
-  "src/eda",
+  "src/sys_config",
+  "src/flow_controller",
+  "src/eda_tasks",
 ]

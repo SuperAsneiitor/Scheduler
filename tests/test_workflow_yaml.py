@@ -5,13 +5,13 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from flow import (
+from flow_controller import (
     DAGManager,
     YAMLParser,
     apply_flow_config_to_dag,
 )
-from flow.graph.exceptions import CyclicDependencyError
-from flow.spec.task_models import TaskStatus, TaskType
+from flow_controller.graph.exceptions import CyclicDependencyError
+from flow_controller.spec.task_models import TaskStatus, TaskType
 
 
 def test_yaml_parser_loads_flow_config(tmp_path: Path) -> None:
@@ -117,8 +117,99 @@ def test_parse_mapping_roundtrip() -> None:
             {"id": "x", "type": "DRC", "depends_on": []},
         ],
     }
-    from flow.spec.yaml_parser import YAMLParser
+    from flow_controller.spec.yaml_parser import YAMLParser
 
     flow = YAMLParser.parse_mapping(data)
     assert flow.tasks[0].id == "x"
     assert flow.tasks[0].type is TaskType.DRC
+
+
+def test_task_config_inputs_outputs_roundtrip(tmp_path: Path) -> None:
+    """inputs/outputs 应自 YAML 解析并进入 FlowConfig。"""
+    yaml_path = tmp_path / "io.yaml"
+    yaml_path.write_text(
+        """
+tasks:
+  - id: step1
+    type: DRC
+    depends_on: []
+    inputs:
+      - "*.def"
+    outputs:
+      - "report.rpt"
+""",
+        encoding="utf-8",
+    )
+    parser = YAMLParser(yaml_path)
+    flow = parser.parse()
+    assert flow.tasks[0].inputs == ["*.def"]
+    assert flow.tasks[0].outputs == ["report.rpt"]
+
+
+def test_apply_flow_config_preserves_io_on_task_node(tmp_path: Path) -> None:
+    """apply_flow_config_to_dag 应将 inputs/outputs 带入 TaskNode。"""
+    yaml_path = tmp_path / "dag_io.yaml"
+    yaml_path.write_text(
+        """
+tasks:
+  - id: a
+    type: GDS_Export
+    inputs: [in.gds]
+    outputs: [out.oas]
+""",
+        encoding="utf-8",
+    )
+    flow = YAMLParser(yaml_path).parse()
+    dag = DAGManager()
+    apply_flow_config_to_dag(flow, dag)
+    node = dag.get_task("a")
+    assert node is not None
+    assert node.inputs == ["in.gds"]
+    assert node.outputs == ["out.oas"]
+
+
+def test_task_config_input_output_checks_roundtrip(tmp_path: Path) -> None:
+    """input_checks/output_checks 应自 YAML 解析。"""
+    yaml_path = tmp_path / "checks.yaml"
+    yaml_path.write_text(
+        """
+tasks:
+  - id: step1
+    type: DRC
+    input_checks:
+      - pattern: "in.txt"
+        min_size_bytes: 1
+    output_checks:
+      - pattern: "out.log"
+        must_contain_regex: "OK"
+""",
+        encoding="utf-8",
+    )
+    flow = YAMLParser(yaml_path).parse()
+    assert flow.tasks[0].input_checks[0].pattern == "in.txt"
+    assert flow.tasks[0].input_checks[0].min_size_bytes == 1
+    assert flow.tasks[0].output_checks[0].must_contain_regex == "OK"
+
+
+def test_apply_flow_config_preserves_checks_on_task_node(tmp_path: Path) -> None:
+    """apply_flow_config_to_dag 应将 checks 带入 TaskNode。"""
+    yaml_path = tmp_path / "dag_checks.yaml"
+    yaml_path.write_text(
+        """
+tasks:
+  - id: a
+    type: GDS_Export
+    input_checks:
+      - pattern: "x"
+    output_checks:
+      - pattern: "y"
+""",
+        encoding="utf-8",
+    )
+    flow = YAMLParser(yaml_path).parse()
+    dag = DAGManager()
+    apply_flow_config_to_dag(flow, dag)
+    node = dag.get_task("a")
+    assert node is not None
+    assert node.input_checks[0].pattern == "x"
+    assert node.output_checks[0].pattern == "y"

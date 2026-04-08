@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from flow.runtime.workspace_manager import WorkspaceManager
+from flow_controller.runtime.workspace_manager import WorkspaceManager
 
 
 def test_workspace_manager_uses_getcwd(tmp_path: Path, monkeypatch) -> None:

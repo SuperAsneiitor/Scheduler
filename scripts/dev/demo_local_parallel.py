@@ -19,8 +19,8 @@ _SRC = ROOT / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from config import load_execution_config_from_mapping
-from flow.executors.backends import LocalExecutor
+from sys_config import load_execution_config_from_mapping
+from flow_controller.executors.backends import LocalExecutor
 
 
 def _timestamp() -> str:
